@@ -1,60 +1,45 @@
-import { Link } from "@nextui-org/link";
-import { Snippet } from "@nextui-org/snippet";
-import { Code } from "@nextui-org/code";
-import { button as buttonStyles } from "@nextui-org/theme";
+import { useState } from "react";
+import { saveAs } from "file-saver";
+import { Button } from "@nextui-org/button";
 
-import { siteConfig } from "@/config/site";
-import { title, subtitle } from "@/components/primitives";
-import { GithubIcon } from "@/components/icons";
 import DefaultLayout from "@/layouts/default";
+import TiptapEditor from "@/components/editor";
+import AsciidocRenderer from "@/components/asciidoc-renderer";
 
 export default function IndexPage() {
+  const [content, setContent] = useState<string>("");
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        setContent(reader.result as string);
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleExport = () => {
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+
+    saveAs(blob, "document.adoc");
+  };
+
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
-        <div className="inline-block max-w-lg text-center justify-center">
-          <h1 className={title()}>Make&nbsp;</h1>
-          <h1 className={title({ color: "violet" })}>beautiful&nbsp;</h1>
-          <br />
-          <h1 className={title()}>
-            websites regardless of your design experience.
-          </h1>
-          <h4 className={subtitle({ class: "mt-4" })}>
-            Beautiful, fast and modern React UI library.
-          </h4>
-        </div>
-
-        <div className="flex gap-3">
-          <Link
-            isExternal
-            className={buttonStyles({
-              color: "primary",
-              radius: "full",
-              variant: "shadow",
-            })}
-            href={siteConfig.links.docs}
-          >
-            Documentation
-          </Link>
-          <Link
-            isExternal
-            className={buttonStyles({ variant: "bordered", radius: "full" })}
-            href={siteConfig.links.github}
-          >
-            <GithubIcon size={20} />
-            GitHub
-          </Link>
-        </div>
-
-        <div className="mt-8">
-          <Snippet hideCopyButton hideSymbol variant="bordered">
-            <span>
-              Get started by editing{" "}
-              <Code color="primary">pages/index.tsx</Code>
-            </span>
-          </Snippet>
-        </div>
-      </section>
+      <label htmlFor="fileInput">选择 AsciiDoc 文件：</label>
+      <input
+        accept=".adoc"
+        id="fileInput"
+        type="file"
+        onChange={handleFileChange}
+      />
+      <Button onClick={handleExport}>导出 AsciiDoc 文件</Button>
+      <TiptapEditor onChange={setContent} />
+      <AsciidocRenderer content={content} />
     </DefaultLayout>
   );
 }
